@@ -1,0 +1,12 @@
+# Entorno
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Datos descargados o generados (se regeneran con los scripts de src/)
+data/raw/
+data/processed/
+
+# Resultados pesados
+results/**/*.tif
