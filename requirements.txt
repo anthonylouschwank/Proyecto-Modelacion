@@ -5,3 +5,4 @@ rasterio
 pystac-client
 requests
 numba
+pytest
