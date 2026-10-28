@@ -6,6 +6,7 @@ un lahar, con Monte Carlo para obtener mapas de probabilidad de alcance.
 
 - Plan del proyecto: [`docs/plan_proyecto_lahares.md`](docs/plan_proyecto_lahares.md)
 - Fuentes de datos y cómo descargarlas: [`data/README.md`](data/README.md)
+- División del trabajo (4 partes): [`docs/tareas/`](docs/tareas/00_general.md)
 
 ## Instalación
 
