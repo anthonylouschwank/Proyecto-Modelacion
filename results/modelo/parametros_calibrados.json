@@ -1,0 +1,8 @@
+{
+  "tipo": "tau_y",
+  "relajacion": 0.2,
+  "tau_y": 1000.0,
+  "volumen_p1_m3": 627307.0,
+  "objetivo_p1": 0.3262586377097729,
+  "jaccard_amplia_p1": 0.45554789800137835
+}
