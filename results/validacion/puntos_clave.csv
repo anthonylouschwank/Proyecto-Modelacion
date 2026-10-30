@@ -1,0 +1,8 @@
+nombre,tipo,esperado_p1,esperado_p2,prob_p1,alcanzado_p1,resultado_p1,prob_p2,alcanzado_p2,resultado_p2
+Puente Las Lajas (RN-14),infraestructura,,,0.976,True,,1.0,True,
+San Miguel Los Lotes,comunidad,0.0,0.0,0.0,False,acierto (no llega),0.01,False,acierto (no llega)
+El Rodeo,comunidad,0.0,0.0,0.0,False,acierto (no llega),0.0,False,acierto (no llega)
+La Reina,comunidad,0.0,0.0,0.0,False,acierto (no llega),0.0,False,acierto (no llega)
+Puente Guacalate (CA-2),infraestructura,,,0.0,False,,0.034,False,
+La Trinidad,control,0.0,0.0,0.0,False,acierto (no llega),0.0,False,acierto (no llega)
+Finca El Zapote,control,0.0,0.0,0.0,False,acierto (no llega),0.0,False,acierto (no llega)
