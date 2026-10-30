@@ -28,16 +28,29 @@ python -m src.sentinel.descargar --fecha 2019-03-26
 python -m src.validacion.mapas_insivumeh
 ```
 
+## Pruebas
+
+```bash
+python -m pytest
+```
+
 ## Estructura
 
 ```
 src/
 ├── config.py        # zona de estudio, CRS, rutas
-├── inputs/          # DEM y lluvia (datos de entrada del modelo)
+├── inputs/          # DEM, lluvia, cuenca de Las Lajas y volumen de lahar
+├── modelo/          # autómata celular y demo en Las Lajas
+├── montecarlo/      # corridas Monte Carlo y mapa de probabilidad
 ├── sentinel/        # búsqueda y descarga de Sentinel-2 (validación)
-└── validacion/      # mapas del INSIVUMEH, métricas (pendiente)
+└── validacion/      # mapas del INSIVUMEH y métricas
+tests/               # pruebas con pytest
+results/             # figuras y tablas (los .tif no se suben)
 data/
 ├── catalogo_lahares.csv   # eventos reales, llenado a mano
-└── raw/                   # descargas (no se suben a git)
+├── raw/                   # descargas (no se suben a git)
+└── processed/             # generados por los scripts (no se suben a git)
 docs/
+├── plan_proyecto_lahares.md
+└── tareas/                # división del trabajo
 ```
