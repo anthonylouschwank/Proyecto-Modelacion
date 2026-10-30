@@ -28,6 +28,29 @@ python -m src.sentinel.descargar --fecha 2019-03-26
 python -m src.validacion.mapas_insivumeh
 ```
 
+> **Windows con acentos en la ruta** (p. ej. `Modelación`): GDAL se cae sin mensaje
+> (código `0xC0000409`) al leer archivos por HTTPS, porque no puede abrir el certificado
+> de `certifi` dentro de la carpeta con acentos. Copien `cacert.pem` a una ruta sin
+> acentos y apunten ahí antes de descargar:
+> `$env:CURL_CA_BUNDLE = "C:\ruta\sin\acentos\cacert.pem"; $env:GDAL_CURL_CA_BUNDLE = $env:CURL_CA_BUNDLE`
+
+## Correr todo el pipeline
+
+En este orden (cada paso usa lo que genera el anterior):
+
+```bash
+python -m src.inputs.cuenca                 # fuente, cuenca, cauce y confluencia (P2)
+python -m src.inputs.volumen                # tormentas de 2019 y su volumen (P2)
+python -m src.sentinel.ndvi                 # mapa observado p1 y p2 (P3)
+python -m src.validacion.mapa_amenaza       # mapa del INSIVUMEH clasificado (P4)
+python -m src.modelo.calibrar               # calibración de v2 con p1 y v1 vs v2 (P1)
+python -m src.montecarlo.correr --n 500 --simulador automata --version v2 --procesos 8
+python -m src.validacion.evaluar            # prueba final: p2, puntos clave, INSIVUMEH (P4)
+```
+
+Resultados en `results/`: `modelo/registro_iteraciones.md` (proceso iterativo),
+`sentinel/umbrales.md`, `montecarlo/` y `validacion/`.
+
 ## Pruebas
 
 ```bash
