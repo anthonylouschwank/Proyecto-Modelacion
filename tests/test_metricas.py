@@ -6,7 +6,8 @@ import pytest
 
 from src.config import AOI, RES_DEM
 from src.validacion.metricas import (
-    alcance_m, confusion, error_alcance, evaluar, fuera_del_corredor, jaccard, puntos_clave,
+    alcance_m, confusion, error_alcance, evaluar, fuera_del_corredor, jaccard,
+    jaccard_penalizado, puntos_clave,
 )
 
 N = 401
@@ -73,6 +74,17 @@ def test_fuera_del_corredor():
     obs = np.zeros((N, N), dtype=np.uint8)
     obs[0, 0] = 255
     assert fuera_del_corredor(sim, obs) == 0.25
+
+
+def test_jaccard_penalizado_cuenta_lo_de_fuera():
+    sim = circulo(200, 200, 50)
+    obs = np.where(sim, 1, 0).astype(np.uint8)
+    assert jaccard_penalizado(sim, obs) == 1
+    # Mismo acierto dentro, pero el modelo además se sale a celdas sin dato.
+    obs[:, 230:] = 255
+    largo = sim | circulo(200, 300, 40)
+    assert jaccard(largo, obs >= 1, obs != 255) == jaccard(sim, obs >= 1, obs != 255)
+    assert jaccard_penalizado(largo, obs) < jaccard_penalizado(sim, obs)
 
 
 def test_puntos_clave():

@@ -74,6 +74,20 @@ def fuera_del_corredor(sim, obs) -> float:
     return float((sim & (obs == NO_VALIDO)).sum() / total) if total else 0.0
 
 
+def jaccard_penalizado(sim, obs, version="amplia") -> float:
+    """Jaccard que además cuenta como error el lodo simulado en celdas sin dato (255).
+
+    El Jaccard normal ignora lo que cae fuera del corredor, así que un modelo que
+    se desborda o sigue de largo río abajo no pierde nada. Este sí lo penaliza:
+    |S ∩ O| / (|S ∪ O| + |S fuera|). Las nubes también cuentan como "fuera", así
+    que es un poco más severo de lo justo.
+    """
+    o, validos = clases(obs, version)
+    dentro = sim & validos
+    union = (dentro | o).sum() + (sim & (obs == NO_VALIDO)).sum()
+    return float((dentro & o).sum() / union) if union else float("nan")
+
+
 def evaluar(sim: np.ndarray, obs: np.ndarray, distancia: np.ndarray) -> dict:
     """sim: bool (alcanzado por el modelo). obs: uint8 de P3 (0/1/2/255).
     distancia: lajas_cauce_distancia.tif de P2.
@@ -84,6 +98,7 @@ def evaluar(sim: np.ndarray, obs: np.ndarray, distancia: np.ndarray) -> dict:
         o, validos = clases(obs, version)
         resultado[version] = {
             "jaccard": jaccard(sim, o, validos),
+            "jaccard_penalizado": jaccard_penalizado(sim, obs, version),
             **confusion(sim, o, validos),
             "error_alcance_m": error_alcance(sim, o, distancia),
         }
