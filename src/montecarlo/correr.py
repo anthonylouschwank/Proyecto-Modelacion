@@ -1,6 +1,6 @@
 """Monte Carlo: mapa de probabilidad de alcance de lahares en Las Lajas.
 
-Cada corrida sortea C, Cs, factor_lluvia, relajacion y h_min (uniformes en
+Cada corrida sortea C, Cs, factor_lluvia, relajacion y tau_y (uniformes en
 RANGOS), toma la tormenta más grande del periodo, calcula su volumen con
 `volumen_lahar` y corre `simular`. La probabilidad de cada celda es la
 fracción de corridas en que fue alcanzada.
@@ -15,6 +15,7 @@ stub: un círculo alrededor de la fuente con radio proporcional a V^(1/3).
 Uso:
     python -m src.montecarlo.correr --n 20                      # stub, p1 y p2
     python -m src.montecarlo.correr --n 500 --simulador automata --version v2 --procesos 6
+       (rangos de relajacion y tau_y: ± 30 % de lo calibrado, ver rangos.py)
 
 Requiere antes: python -m src.inputs.cuenca  y  la lluvia de 2019 (ver src.inputs.volumen).
 
@@ -32,8 +33,11 @@ import pandas as pd
 import rasterio
 
 from src.config import PROCESSED, RAIZ, RAW, RES_DEM
-from src.inputs.volumen import cargar_fuente, cargar_lluvia, tormentas, volumen_lahar
+from src.inputs.volumen import (
+    area_escurrimiento, cargar_fuente, cargar_lluvia, tormentas, volumen_lahar,
+)
 from src.modelo.automata import Parametros, simular
+from src.modelo.terreno import cargar_dem
 from src.montecarlo.rangos import RANGOS  # rangos y sus fuentes
 
 DEM = RAW / "dem" / "dem_fuego_30m.tif"
@@ -71,15 +75,15 @@ _ESTADO = {}
 
 
 def _iniciar(simulador, version):
-    with rasterio.open(DEM) as src:
-        _ESTADO["dem"] = src.read(1).astype("float64")
+    # El autómata corre sobre el DEM sin hoyos (ver src/modelo/terreno.py).
+    _ESTADO["dem"] = cargar_dem()
     f = cargar_fuente()
     _ESTADO.update(fuente=(f["fila"], f["col"]), simulador=simulador, version=version)
 
 
 def _corrida(args):
-    volumen, relajacion, h_min = args
-    params = Parametros(relajacion=relajacion, h_min=h_min)
+    volumen, relajacion, tau_y = args
+    params = Parametros(relajacion=relajacion, tau_y=tau_y)
     r = _ESTADO["simulador"](_ESTADO["dem"], _ESTADO["fuente"], volumen, params,
                              version=_ESTADO["version"], res=float(RES_DEM))
     return r.alcanzado
@@ -94,7 +98,7 @@ def monte_carlo(periodo: str, n: int, rangos: dict, semilla: int = 42,
 
     `al_avanzar(i, contador)` se llama después de cada corrida (i empieza en 1).
     """
-    area = cargar_fuente()["area_cuenca_m2"]
+    area = area_escurrimiento()
     tormenta = tormenta_mayor(periodo)
     with rasterio.open(PROCESSED / "lajas_cauce_distancia.tif") as src:
         distancia = src.read(1)
@@ -108,7 +112,7 @@ def monte_carlo(periodo: str, n: int, rangos: dict, semilla: int = 42,
         volumen_lahar(p, area, c, cs)
         for p, c, cs in zip(muestras["lluvia_mm"], muestras["C"], muestras["Cs"])
     ]
-    tareas = list(zip(muestras["volumen_m3"], muestras["relajacion"], muestras["h_min"]))
+    tareas = list(zip(muestras["volumen_m3"], muestras["relajacion"], muestras["tau_y"]))
 
     contador = np.zeros(distancia.shape, dtype="int32")
     area_km2, alcance = [], []

@@ -82,15 +82,24 @@ Multiplica la lluvia de la tormenta antes de calcular el volumen.
   consigue datos de una estación del INSIVUMEH, se puede calibrar.
 
 ------------------------------------------------------------------------------
-relajacion y h_min – parámetros del autómata (P1): ± 30 % de lo calibrado
+relajacion y tau_y – parámetros del autómata v2 (P1): ± 30 % de lo calibrado
 ------------------------------------------------------------------------------
 - No son propiedades medibles del lodo sino parámetros del modelo, así que no
   hay literatura que dé su rango: el ± 30 % representa la incertidumbre de la
   calibración con el periodo p1 (2019-03-26 → 2019-07-04).
 - Mejor opción cuando P1 calibre: en vez del ± 30 %, usar el rango de valores
   que dieron un ajuste aceptable (p. ej., Jaccard dentro del 10 % del mejor).
-- Por ahora: relajacion 0.5 ± 30 % = 0.35–0.65 (valor por defecto de v1), y
-  h_min = 0 (v1 no lo usa). Actualizar con los valores de v2/v3.
+- Calibración con p1 (src/modelo/calibrar.py, results/modelo/parametros_calibrados.json):
+  la mejor combinación fue la v2 de Bingham con relajacion = 0.2 y
+  tau_y = 1000 Pa. ± 30 %: relajacion 0.14–0.26 y tau_y 700–1300 Pa.
+- tau_y sí es una propiedad del lodo: 1000 Pa cae dentro de los esfuerzos de
+  fluencia de Bingham que se reportan para flujos de detritos y lahares
+  (del orden de 10² a 10⁴ Pa; Major y Pierson, 1992, Water Resources Research,
+  28(3), 841–857, doi:10.1029/91WR02834), así que la calibración no dio un
+  valor raro.
+- Se usa tau_y y no h_min porque Bingham ajustó un poco mejor (0.326 contra
+  0.312 de Jaccard penalizado) y porque el espesor crítico depende de la
+  pendiente, que es lo que detiene al lodo al llegar a la planicie.
 
 ------------------------------------------------------------------------------
 También es una suposición (en src/inputs/volumen.py)
@@ -108,6 +117,6 @@ RANGOS = {
     "C": (0.3, 0.7),
     "Cs": (0.3, 0.6),
     "factor_lluvia": (1.0, 1.5),
-    "relajacion": (0.35, 0.65),
-    "h_min": (0.0, 0.0),
+    "relajacion": (0.14, 0.26),
+    "tau_y": (700.0, 1300.0),
 }
