@@ -57,3 +57,37 @@ traslape), puntos clave con desenlace conocido y el mapa de amenaza oficial.
 
 El código está en `src/` y se corre en el orden del README ("Correr todo el pipeline").
 
+## 4.1 Cuenca, cauce y volumen (`src/inputs/`)
+
+- `cuenca.py` (pysheds): rellena el DEM, calcula dirección de flujo D8 y acumulación,
+  ubica la **fuente** del lahar sobre Las Lajas a 1829 m (celda (287, 812)) y traza el
+  **cauce** hasta el borde de la zona con su distancia acumulada. Detecta la
+  **confluencia con el río Guacalate** en el km 7.44, donde el área drenada salta de
+  11.3 km² a 124 km².
+- `volumen.py`: separa la serie horaria en tormentas (≥ 20 mm, separadas por ≥ 6 h secas)
+  y calcula el volumen con un balance simple:
+
+  $$V_{agua} = P \cdot A \cdot C, \qquad V_{lahar} = \frac{V_{agua}}{1 - C_s}$$
+
+  con `A` = 11.3 km² (Las Lajas hasta la confluencia), `C` el coeficiente de
+  escurrimiento y `Cs` la concentración de sedimento.
+
+![Cuenca, cauce y fuente de Las Lajas sobre el DEM y Sentinel-2.](../../results/montecarlo/cuenca_lajas.png)
+
+## 4.6 Monte Carlo (`src/montecarlo/correr.py`)
+
+Cada corrida sortea, con distribución uniforme:
+
+| Parámetro | Rango | Justificación (detalle en `src/montecarlo/rangos.py`) |
+|---|---|---|
+| `C` | 0.3 – 0.7 | La ceniza fresca sella el suelo (Jones et al., 2017; Pierson y Major, 2014) |
+| `Cs` | 0.3 – 0.6 | Flujos hiperconcentrados a de detritos (Pierson y Costa, 1987; Pierson, 2005) |
+| `factor_lluvia` | 1.0 – 1.5 | El modelo de 9 km suaviza los picos de tormentas convectivas |
+| `relajacion` | 0.14 – 0.26 | ± 30 % de lo calibrado |
+| `τ_y` | 700 – 1300 Pa | ± 30 % de lo calibrado |
+
+Toma la tormenta mayor del periodo, calcula su volumen, corre la v2 y suma las celdas
+alcanzadas: $P(\text{alcance}) = \text{corridas con lodo} / N$, con N = 500 y semilla fija.
+**Suposición:** con la misma fuente y parámetros, un volumen mayor cubre lo que cubre uno
+menor, así que la huella de la temporada ≈ la de la tormenta mayor.
+
