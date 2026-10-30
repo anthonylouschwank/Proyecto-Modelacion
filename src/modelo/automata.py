@@ -9,6 +9,11 @@ de altura dividida entre la distancia.
 Versiones:
     v1: todo el lodo puede moverse; se comporta como agua y solo se detiene
         en depresiones o al salir de la zona.
+    v2: el lodo tiene resistencia. Una celda solo cede el lodo que pasa de un
+        espesor crítico h_crit = max(h_min, tau_y / (ρ g sen θ)), con θ la
+        pendiente de la superficie libre hacia el vecino más bajo. En pendiente
+        fuerte h_crit es pequeño (fluye); en terreno plano es enorme (se detiene).
+        Con tau_y = 0 queda la versión simple (espesor mínimo fijo h_min).
 
 El paso se compila con Numba; solo se recorre el rectángulo donde ya hay
 lodo (más un borde de una celda), que crece conforme avanza el flujo.
@@ -19,7 +24,8 @@ from dataclasses import dataclass
 import numpy as np
 from numba import njit
 
-VERSIONES = ("v1",)
+VERSIONES = ("v1", "v2")
+G = 9.81  # m/s²
 UMBRAL_ALCANCE = 0.1  # m; una celda cuenta como "alcanzada" con más de 10 cm de lodo
 
 # Vecindad de Moore: desplazamientos (fila, col).
@@ -51,11 +57,12 @@ class Resultado:
 
 
 @njit(cache=True)
-def _paso(z, h, dh, r0, r1, c0, c1, relajacion, res):
+def _paso(z, h, dh, r0, r1, c0, c1, relajacion, res, resistencia, h_min, tau_y, densidad):
     """Un paso síncrono sobre las filas r0..r1 y columnas c0..c1 (inclusive).
 
     Calcula todos los flujos con el estado actual (`h`), los acumula en `dh`
-    y luego los aplica. Devuelve (volumen movido, volumen que salió de la zona,
+    y luego los aplica. Con `resistencia` (v2) solo se mueve el lodo por encima
+    del espesor crítico. Devuelve (volumen movido, volumen que salió de la zona,
     y el rectángulo r0, r1, c0, c1 donde quedó lodo).
     """
     nf, nc = h.shape
@@ -74,6 +81,7 @@ def _paso(z, h, dh, r0, r1, c0, c1, relajacion, res):
             pesos = np.zeros(8)
             suma = 0.0
             H_min = Hi
+            d_min = res
             for k in range(8):
                 fi = i + _DF[k]
                 fj = j + _DC[k]
@@ -88,12 +96,24 @@ def _paso(z, h, dh, r0, r1, c0, c1, relajacion, res):
                     suma += pesos[k]
                     if Hj < H_min:
                         H_min = Hj
+                        d_min = d
             if suma == 0.0:
                 continue
 
-            # v1: todo el lodo puede moverse. Nunca más de la mitad de la
-            # diferencia con el vecino más bajo, para que no oscile.
-            salida = relajacion * min(hi, 0.5 * (Hi - H_min))
+            h_mov = hi
+            if resistencia:
+                h_crit = h_min
+                if tau_y > 0.0:
+                    tan_t = (Hi - H_min) / d_min
+                    sen_t = tan_t / np.sqrt(1.0 + tan_t * tan_t)
+                    h_crit = max(h_crit, tau_y / (densidad * G * sen_t))
+                h_mov = hi - h_crit
+                if h_mov <= 0.0:
+                    continue
+
+            # Nunca más de la mitad de la diferencia con el vecino más bajo,
+            # para que no oscile.
+            salida = relajacion * min(h_mov, 0.5 * (Hi - H_min))
             if salida <= 0.0:
                 continue
             dh[i, j] -= salida
@@ -179,7 +199,9 @@ def simular(dem, fuente, volumen_m3, params=None, version="v1", res=30.0):
         # el rectángulo una celda por lado.
         a0, a1 = max(r0 - 1, 0), min(r1 + 1, nf - 1)
         b0, b1 = max(c0 - 1, 0), min(c1 + 1, nc - 1)
-        movido, salio, r0, r1, c0, c1 = _paso(z, h, dh, a0, a1, b0, b1, params.relajacion, res)
+        movido, salio, r0, r1, c0, c1 = _paso(
+            z, h, dh, a0, a1, b0, b1, params.relajacion, res,
+            version == "v2", params.h_min, params.tau_y, params.densidad)
         perdido += salio
         _actualizar_registro(h, h_max, paso_llegada, paso, a0, a1, b0, b1, UMBRAL_ALCANCE)
 
