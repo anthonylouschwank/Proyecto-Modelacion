@@ -74,6 +74,28 @@ El código está en `src/` y se corre en el orden del README ("Correr todo el pi
 
 ![Cuenca, cauce y fuente de Las Lajas sobre el DEM y Sentinel-2.](../../results/montecarlo/cuenca_lajas.png)
 
+## 4.2 Autómata celular (`src/modelo/automata.py`)
+
+Algoritmo de **minimización de diferencias** (Di Gregorio y Serra, 1999), base de los
+modelos SCIDDICA de flujos de detritos. Cada celda tiene terreno `z` y espesor de lodo
+`h`; con superficie libre $H = z + h$ y vecindad de Moore:
+
+1. Lodo que puede moverse: $h_{mov} = h$ en v1 y $h_{mov} = \max(0,\, h - h_{crit})$ en v2,
+   con espesor crítico de Bingham
+   $$h_{crit} = \max\!\left(h_{min},\; \frac{\tau_y}{\rho\, g \sin\theta}\right)$$
+   donde $\theta$ es la pendiente de la superficie libre hacia el vecino más bajo. En
+   pendiente fuerte $h_{crit}$ es pequeño (el lodo fluye); en la planicie es enorme (se detiene).
+2. Sale $\text{relajación} \cdot \min(h_{mov}, (H_i - \min_j H_j)/2)$, repartido entre los
+   vecinos más bajos en proporción a $(H_i - H_j)/d_{ij}$.
+3. El volumen se suelta en la fuente durante 100 pasos; el lodo que sale de la zona se
+   contabiliza; la simulación termina cuando lo que se mueve en un paso es menor que
+   $10^{-4}$ del volumen.
+
+Se compila con Numba y solo recorre el rectángulo con lodo: una corrida tarda de menos de
+un segundo a unos 10 s. `tests/test_automata.py` verifica conservación de masa (error
+< 10⁻⁹), plano inclinado, cuenco, canal en V, borde absorbente, que v2 se detiene en
+plano, y que más volumen ⇒ más alcance y más resistencia ⇒ menos alcance (13 pruebas).
+
 ## 4.6 Monte Carlo (`src/montecarlo/correr.py`)
 
 Cada corrida sortea, con distribución uniforme:
