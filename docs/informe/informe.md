@@ -218,3 +218,23 @@ y absorbe el rojo, así que vale ~0.85 en vegetación y ~0.05 en suelo o lodo.
 **STAC** es un estándar de catálogos de imágenes satelitales; con él se leen solo los
 píxeles de la zona de estudio de las imágenes Sentinel-2 en AWS, sin bajar escenas completas.
 
+## 5.1 Reproducibilidad
+
+Todo el proyecto se regenera desde cero con los scripts del repositorio, en este orden
+(cada paso usa lo que produce el anterior):
+
+| Paso | Comando | Produce |
+|---|---|---|
+| 1 | `python -m src.inputs.cuenca` | Fuente, cuenca, cauce y confluencia |
+| 2 | `python -m src.inputs.volumen` | Tormentas de 2019 y su volumen |
+| 3 | `python -m src.sentinel.ndvi` | Mapas observados de p1 y p2 |
+| 4 | `python -m src.validacion.mapa_amenaza` | Mapa del INSIVUMEH clasificado |
+| 5 | `python -m src.modelo.calibrar` | Calibración de v2 y comparación v1 contra v2 |
+| 6 | `python -m src.montecarlo.correr --n 500` | Mapas de probabilidad de p1 y p2 |
+| 7 | `python -m src.validacion.evaluar` | Prueba final, puntos clave e INSIVUMEH |
+
+Las descargas (DEM, lluvia e imágenes Sentinel-2) no se suben al repositorio porque
+pesan varios cientos de MB; los scripts de `src/` las vuelven a bajar. Las 27 pruebas
+automáticas se corren con `python -m pytest`. El Monte Carlo completo, 500 corridas por
+periodo con 12 procesos, tarda unos 10 minutos en una laptop.
+
