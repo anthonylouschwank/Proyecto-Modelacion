@@ -170,3 +170,51 @@ alcanzadas: $P(\text{alcance}) = \text{corridas con lodo} / N$, con N = 500 y se
 **Suposición:** con la misma fuente y parámetros, un volumen mayor cubre lo que cubre uno
 menor, así que la huella de la temporada ≈ la de la tormenta mayor.
 
+## 4.7 Validación (`src/validacion/`)
+
+- `metricas.py`: Jaccard, matriz de confusión (precisión, sensibilidad, F1), error de
+  alcance por el cauce, fracción fuera del corredor, Jaccard penalizado y puntos clave.
+  Probadas con círculos inventados (`tests/test_metricas.py`).
+- `mapa_amenaza.py`: clasifica el mapa del INSIVUMEH por color (HSV) en amenaza alta,
+  media y baja, quita texto y carreteras con apertura morfológica y lo pasa a 30 m.
+- `data/puntos_clave.csv`: puente Las Lajas (RN-14), San Miguel Los Lotes, El Rodeo,
+  La Reina, puente Guacalate (CA-2) y dos puntos de control en otra barranca
+  (coordenadas de OpenStreetMap).
+- `data/catalogo_lahares.csv`: cuatro lahares de Las Lajas en 2019 con fuente (CONRED,
+  INSIVUMEH, prensa): 11 abr y 10 may (p1), 4 y 28 oct (p2).
+- `evaluar.py`: prueba final con los parámetros ya fijos.
+
+# 5. Herramientas aplicadas
+
+| Herramienta | Para qué | ¿Vista en clase? |
+|---|---|---|
+| Autómatas celulares | Modelo de flujo del lodo | Sí |
+| Simulación Monte Carlo | Propagar la incertidumbre de 5 parámetros | Sí |
+| Análisis de convergencia | Saber si N = 500 basta | Sí |
+| Python, NumPy, pandas, Matplotlib | Todo el pipeline | Sí |
+| **Numba** | Compilar el paso del autómata | No (ver abajo) |
+| **rasterio / GDAL** | Leer y escribir rasters georreferenciados, reproyectar | No (ver abajo) |
+| **pysheds** | Dirección de flujo, acumulación y cuencas | No (ver abajo) |
+| **NDVI con Sentinel-2** | Detectar pérdida de vegetación | No (ver abajo) |
+| **STAC (pystac-client)** | Buscar y leer imágenes satelitales en la nube | No (ver abajo) |
+| pytest | 27 pruebas automáticas | — |
+
+**Numba** traduce funciones de Python con ciclos a código máquina (compilación JIT). El
+paso del autómata recorre ~10⁵ celdas por paso y miles de pasos; en Python puro tardaría
+horas por corrida, con Numba entre menos de 1 s y ~10 s.
+
+**rasterio / GDAL**: un raster georreferenciado es una matriz más una transformación
+afín que dice qué coordenada (UTM 15N) corresponde a cada celda. Todo el proyecto usa la
+misma cuadrícula de 1280 × 1280 celdas de 30 m, así que las máscaras se combinan
+directamente con NumPy.
+
+**pysheds** implementa el algoritmo D8: cada celda drena hacia su vecina de mayor
+pendiente descendente; la acumulación cuenta cuántas celdas drenan a través de cada una.
+Con eso se obtiene la cuenca de un punto, el cauce y la confluencia.
+
+**NDVI** = (NIR − Rojo) / (NIR + Rojo): la vegetación refleja mucho infrarrojo cercano
+y absorbe el rojo, así que vale ~0.85 en vegetación y ~0.05 en suelo o lodo.
+
+**STAC** es un estándar de catálogos de imágenes satelitales; con él se leen solo los
+píxeles de la zona de estudio de las imágenes Sentinel-2 en AWS, sin bajar escenas completas.
+
