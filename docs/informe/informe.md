@@ -238,3 +238,24 @@ pesan varios cientos de MB; los scripts de `src/` las vuelven a bajar. Las 27 pr
 automáticas se corren con `python -m pytest`. El Monte Carlo completo, 500 corridas por
 periodo con 12 procesos, tarda unos 10 minutos en una laptop.
 
+# 6. Resultados
+
+Todos los números se regeneran con los comandos del README; las tablas están en
+`results/modelo/`, `results/montecarlo/` y `results/validacion/`.
+
+## 6.1 v1 contra v2 (proceso iterativo)
+
+Una corrida con el volumen central de la tormenta mayor de cada periodo
+(`results/modelo/metricas_versiones.csv`):
+
+| Versión | Periodo | Volumen | Alcance por el cauce | Jaccard penalizado | Jaccard amplio | Fuera del corredor |
+|---|---|---|---|---|---|---|
+| v1 | p1 (calibración) | 6.3 × 10⁵ m³ | 38.6 km (sale de la zona) | 0.124 | 0.409 | 80 % |
+| **v2** | p1 (calibración) | 6.3 × 10⁵ m³ | **8.3 km** | **0.326** | 0.456 | 38 % |
+| v1 | p2 (prueba) | 1.5 × 10⁶ m³ | 38.6 km (sale de la zona) | 0.114 | 0.451 | 80 % |
+| **v2** | p2 (prueba) | 1.5 × 10⁶ m³ | **14.1 km** | **0.227** | 0.437 | 54 % |
+
+La resistencia de Bingham hace que el lodo se detenga en la planicie en vez de seguir
+hasta el mar. En el periodo de prueba, que no se usó para calibrar, el Jaccard
+penalizado de v2 **duplica** al de v1.
+
