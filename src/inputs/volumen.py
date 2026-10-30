@@ -7,7 +7,10 @@ cada una en m³ de lodo con un balance simple:
     V_lahar = V_agua / (1 − Cs)
 
 C es el coeficiente de escurrimiento y Cs la concentración de sedimento en
-volumen. El área sale de data/processed/lajas_fuente.json (src.inputs.cuenca).
+volumen. El área sale de data/processed/lajas_fuente.json (src.inputs.cuenca):
+es toda la cuenca de Las Lajas hasta la confluencia con el Guacalate, no solo lo
+que drena arriba de la fuente, porque el lahar se alimenta del escurrimiento de
+toda la barranca en su camino (ver area_escurrimiento).
 
 Uso:
     python -m src.inputs.lluvia --inicio 2019-03-26 --fin 2019-12-11   # antes
@@ -87,6 +90,16 @@ def cargar_fuente():
     return json.loads(ruta.read_text())
 
 
+def area_escurrimiento(fuente=None):
+    """Área (m²) que escurre hacia el lahar: Las Lajas hasta la confluencia.
+
+    Antes se usaba solo la cuenca arriba de la fuente (0.32 km²), que da
+    volúmenes de ~10⁴ m³: tan chicos que el lodo no sale de la parte alta.
+    """
+    fuente = fuente or cargar_fuente()
+    return fuente.get("area_lajas_m2", fuente["area_cuenca_m2"])
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--lluvia", default=LLUVIA_2019, help="CSV de src.inputs.lluvia")
@@ -94,7 +107,7 @@ def main():
     parser.add_argument("--umbral", type=float, default=20, help="mm por tormenta")
     args = parser.parse_args()
 
-    area = cargar_fuente()["area_cuenca_m2"]
+    area = area_escurrimiento()
     t = tormentas(cargar_lluvia(args.lluvia), args.horas_secas, args.umbral)
     t["volumen_central_m3"] = [
         round(volumen_lahar(p, area, C_CENTRAL, CS_CENTRAL)) for p in t["lluvia_mm"]
@@ -103,7 +116,7 @@ def main():
     SALIDA.parent.mkdir(parents=True, exist_ok=True)
     t.to_csv(SALIDA, index=False)
 
-    print(f"Área de la cuenca: {area / 1e6:.3f} km²; C = {C_CENTRAL}, Cs = {CS_CENTRAL}")
+    print(f"Área de escurrimiento: {area / 1e6:.3f} km²; C = {C_CENTRAL}, Cs = {CS_CENTRAL}")
     print(f"Tormentas con >= {args.umbral:g} mm (separadas por >= {args.horas_secas} h secas):")
     for periodo, g in t.groupby("periodo"):
         mayor = g.loc[g["lluvia_mm"].idxmax()]

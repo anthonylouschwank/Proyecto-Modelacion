@@ -8,6 +8,11 @@ dirección de flujo D8 y acumulación. Luego:
 2. Cuenca: todas las celdas que drenan hacia la fuente.
 3. Cauce: el camino D8 desde la fuente hasta el borde de la zona, con la
    distancia a lo largo del cauce.
+4. Confluencia con el Guacalate: el primer punto del cauce donde el área
+   drenada salta (entra un río mucho más grande). Hasta ahí es Las Lajas; más
+   abajo el cauce es el Guacalate, cuyos cambios no se deben solo a los lahares
+   de Las Lajas. El área drenada justo antes de la confluencia (`area_lajas_m2`)
+   es la que escurre hacia la barranca y alimenta el volumen del lahar.
 
 ¿Por qué esa fuente? Es la celda más alta del cauce principal de Las Lajas en
 el DEM con al menos ~0.3 km² de área drenada (1855 m): ahí el cauce ya está
@@ -47,6 +52,7 @@ RESULTADOS = RAIZ / "results" / "montecarlo"
 # Punto escogido a mano sobre Las Lajas (UTM 15N): celda (285, 810), a 1855 m.
 FUENTE_MANUAL_UTM = (731_115, 1_599_435)
 RADIO_SNAP = 2  # celdas; más grande y el snap puede saltar a la barranca vecina
+SALTO_CONFLUENCIA = 5  # el área drenada se multiplica al menos por esto al entrar un río
 
 # Códigos D8 de pysheds (N, NE, E, SE, S, SO, O, NO) → desplazamiento (fila, col).
 DIRMAP = (64, 128, 1, 2, 4, 8, 16, 32)
@@ -93,6 +99,22 @@ def trazar_cauce(fdir, fuente):
     return cauce, distancia
 
 
+def confluencia(acc, distancia):
+    """Primer punto del cauce donde el área drenada salta SALTO_CONFLUENCIA veces.
+
+    Devuelve (fila, col, distancia en m, área drenada justo antes en m²).
+    """
+    filas, cols = np.nonzero(np.isfinite(distancia))
+    orden = np.argsort(distancia[filas, cols])
+    filas, cols = filas[orden], cols[orden]
+    a = acc[filas, cols]
+    for k in range(1, len(a)):
+        if a[k] >= SALTO_CONFLUENCIA * a[k - 1]:
+            return (int(filas[k]), int(cols[k]), float(distancia[filas[k], cols[k]]),
+                    float(a[k - 1]) * RES_DEM**2)
+    raise ValueError("No se encontró la confluencia en el cauce")
+
+
 def cuenca_lajas(fuente_utm=FUENTE_MANUAL_UTM):
     """Calcula fuente, cuenca, cauce y distancia. Devuelve un diccionario con todo."""
     with rasterio.open(DEM) as src:
@@ -109,9 +131,12 @@ def cuenca_lajas(fuente_utm=FUENTE_MANUAL_UTM):
     cauce, distancia = trazar_cauce(fdir, (fila, col))
 
     area = float(cuenca.sum()) * RES_DEM**2
+    cf, cc, d_conf, area_lajas = confluencia(acc, distancia)
     fuente = {
         "fila": fila, "col": col, "x": float(x), "y": float(y),
         "z": round(float(z[fila, col]), 1), "area_cuenca_m2": area,
+        "confluencia": [cf, cc], "km_confluencia": round(d_conf / 1000, 2),
+        "area_lajas_m2": area_lajas,
     }
     return dict(fuente=fuente, cuenca=cuenca, cauce=cauce, distancia=distancia,
                 acc=acc, z=z, perfil=perfil, manual=(fila0, col0))
@@ -194,6 +219,8 @@ def main():
           f"(punto manual en {r['manual']}, snap de {RADIO_SNAP} celdas)")
     print(f"  UTM: x {f['x']:.0f}, y {f['y']:.0f}")
     print(f"  área de la cuenca: {f['area_cuenca_m2'] / 1e6:.3f} km²")
+    print(f"  confluencia con el Guacalate en el km {f['km_confluencia']}, celda "
+          f"{tuple(f['confluencia'])}; área de Las Lajas hasta ahí: {f['area_lajas_m2'] / 1e6:.2f} km²")
     print(f"  cauce: {int(r['cauce'].sum())} celdas, "
           f"{np.nanmax(r['distancia']) / 1000:.1f} km hasta el borde de la zona")
     print(f"Guardado en {PROCESSED}")
