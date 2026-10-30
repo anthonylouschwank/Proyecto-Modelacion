@@ -17,21 +17,32 @@ import pypandoc
 AQUI = Path(__file__).resolve().parent
 EDGE = Path(r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe")
 
+# Mismo estilo que los informes de laboratorio del curso: Times, texto
+# justificado, portada propia y tablas con encabezado negro.
 CSS = """
-body { font-family: "Segoe UI", Arial, sans-serif; font-size: 10.5pt; line-height: 1.45;
-       max-width: 17cm; margin: 0 auto; color: #222; }
-h1 { font-size: 15pt; border-bottom: 1px solid #999; margin-top: 1.4em; }
-h2 { font-size: 12.5pt; margin-top: 1.1em; }
-header h1.title { font-size: 19pt; border: none; text-align: center; }
-header p.subtitle, header p.author, header p.date { text-align: center; margin: 0.2em; }
-table { border-collapse: collapse; margin: 0.6em 0; font-size: 9pt; }
-th, td { border: 1px solid #bbb; padding: 3px 6px; vertical-align: top; }
-th { background: #eee; }
-code { font-size: 9pt; background: #f4f4f4; padding: 0 2px; }
+body { font-family: "Times New Roman", Times, serif; font-size: 11.5pt; line-height: 1.4;
+       max-width: 17cm; margin: 0 auto; color: #000; text-align: justify; }
+h1 { font-size: 18pt; font-weight: bold; margin: 1.2em 0 0.4em; text-align: left; }
+h2 { font-size: 14pt; font-weight: bold; margin: 1em 0 0.3em; text-align: left; }
+.portada { text-align: center; page-break-after: always; padding-top: 0.6cm; }
+.portada p { margin: 0.35em 0; }
+.portada .uvg { font-size: 15pt; margin-bottom: 1.2em; }
+.portada .logo { width: 4.2cm; margin: 0.9cm 0 0.8cm; }
+.portada .titulo { font-size: 17pt; margin-top: 0.5em; }
+.portada .subtitulo { font-size: 12.5pt; }
+.portada .integrantes { margin: 1cm 0 0.7cm; }
+.portada .repo { font-size: 10.5pt; }
+.portada .fecha { margin-top: 0.8cm; }
+table { border-collapse: collapse; margin: 0.7em auto; font-size: 9.5pt; text-align: center; }
+th { background: #000; color: #fff; font-weight: bold; padding: 4px 8px; }
+td { padding: 4px 8px; border-bottom: 1px solid #ccc; vertical-align: top; }
+tr:nth-child(even) td { background: #f0f0f0; }
+code { font-family: Consolas, monospace; font-size: 9.5pt; }
 figure { text-align: center; margin: 0.8em 0; page-break-inside: avoid; }
 figure img { max-width: 100%; }
-figcaption { font-size: 9pt; color: #555; }
-@page { size: A4; margin: 2cm 1.8cm; }
+figcaption { font-size: 10pt; font-style: italic; }
+a { color: #000; }
+@page { size: letter; margin: 2.2cm 2cm; }
 """
 
 
