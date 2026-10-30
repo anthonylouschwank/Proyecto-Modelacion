@@ -281,3 +281,127 @@ Los mapas de probabilidad (`prob_p1.png`, `prob_p2.png`) muestran P ≈ 1 en la 
 de Las Lajas hasta el puente de la RN-14 y una cola de probabilidad baja que sigue por el
 Guacalate.
 
+## 6.3 Prueba contra Sentinel-2
+
+Mapa del Monte Carlo con umbral P ≥ 0.5 contra la máscara observada
+(`results/validacion/tabla_metricas.csv`):
+
+| Periodo | Versión | Celdas observadas | Jaccard | Jaccard penalizado | F1 | Precisión | Sensibilidad |
+|---|---|---|---|---|---|---|---|
+| p1 (calibración) | amplia | 1158 | 0.464 | 0.311 | 0.634 | 0.665 | 0.605 |
+| **p2 (prueba)** | **amplia** | 1107 | **0.436** | **0.209** | **0.607** | 0.528 | 0.713 |
+| p1 / p2 | estricta | 1 / 8 | — | — | — | — | — |
+
+- En la prueba (p2) el modelo **acierta el 71 % del cauce desnudo** observado
+  (sensibilidad) y el 53 % de lo que simula dentro del corredor está observado.
+- El desempeño en p2 es parecido al de p1 (F1 0.61 contra 0.63): **no hay
+  sobreajuste** a los datos de calibración.
+- La versión estricta no se puede evaluar: casi no hay "cambio seguro" en Las Lajas.
+- El 41 % (p1) y el 57 % (p2) del área simulada cae fuera del corredor, casi todo
+  **pasando la confluencia, por el Guacalate** (`sim_vs_obs_p2.png`). Ahí no hay "verdad"
+  confiable, así que no sabemos si es error: los lahares grandes de Fuego sí llegan al
+  Guacalate. Por el mismo motivo el error de alcance (+2.0 km en p1, +9.2 km en p2) está
+  inflado: la observación se cortó en el km 7.44.
+
+![Modelo (P ≥ 0.5) contra Sentinel-2 en el periodo de prueba p2.](../../results/validacion/sim_vs_obs_p2.png){width=50%}
+
+## 6.4 Puntos clave
+
+`results/validacion/puntos_clave.csv`:
+
+| Punto | P (p1) | P (p2) | Esperado | Resultado |
+|---|---|---|---|---|
+| Puente Las Lajas (RN-14) | 0.98 | 1.00 | sin dato de 2019 | alcanzado |
+| San Miguel Los Lotes | 0.00 | 0.01 | no | acierto |
+| El Rodeo | 0.00 | 0.00 | no | acierto |
+| La Reina | 0.00 | 0.00 | no | acierto |
+| Puente Guacalate (CA-2) | 0.00 | 0.03 | sin dato | no alcanzado |
+| La Trinidad (control) | 0.00 | 0.00 | no | acierto |
+| Finca El Zapote (control) | 0.00 | 0.00 | no | acierto |
+
+**Cero falsas alarmas** en las comunidades y los puntos de control. El modelo predice
+con P ≈ 1 que los lahares de 2019 llegaron al puente de la RN-14, algo que ha pasado
+otras veces, pero los boletines de 2019 no lo confirman ni lo descartan.
+
+## 6.5 Mapa de amenaza del INSIVUMEH (escenario B)
+
+Corrida de volumen alto (tormenta máxima de 2019 × 1.5, C = 0.7, Cs = 0.6 → 4.4 × 10⁶ m³)
+contra la zona de amenaza de Las Lajas (`insivumeh_vs_modelo.png`):
+
+- **El 90 % del área simulada cae dentro de la zona de amenaza** oficial: el modelo no
+  manda lodo a donde el INSIVUMEH dice que no llega.
+- La simulación cubre solo el **12 %** de la zona (20 % de la zona de amenaza alta).
+  La zona del INSIVUMEH incluye todo el abanico del depósito piroclástico de 2018 cerca
+  del cono y bordes anchos de tipo LAHARZ en la planicie; nuestro autómata a 30 m
+  concentra el lodo en el cauce. El alcance (24 km) llega cerca del cruce con la CA-2,
+  como el mapa.
+
+![Corrida de volumen alto contra la zona de amenaza del INSIVUMEH.](../../results/validacion/insivumeh_vs_modelo.png){width=50%}
+
+# 7. Conclusiones
+
+1. Un **autómata celular con resistencia de Bingham** sobre el terreno real reproduce
+   el comportamiento básico de un lahar: corre por la barranca y se detiene al llegar a
+   la planicie. La versión sin resistencia (v1) se comporta como agua y llega al mar.
+2. La calibración con p1 dio **τ_y = 1000 Pa**, un valor físicamente razonable para
+   flujos de detritos. En la prueba con p2, sin reajustar, el modelo mantuvo su
+   desempeño (F1 0.61 contra 0.63), duplicó a v1 en Jaccard penalizado y no dio
+   ninguna falsa alarma en comunidades ni puntos de control.
+3. El **Monte Carlo** convierte la incertidumbre de la lluvia, el volumen y la reología
+   en un mapa de probabilidad que converge con 500 corridas. El puente de la RN-14 queda
+   con P ≈ 1 en ambos periodos de 2019.
+4. La mayor parte del trabajo no fue el modelo sino **decidir contra qué compararlo**.
+   Tres errores de planteamiento (hoyos del DSM, el río Guacalate dentro del corredor,
+   un volumen calculado con una cuenca demasiado chica) solo aparecieron al revisar si
+   los resultados tenían sentido físico, y cada uno cambió la conclusión.
+5. **Sentinel-2 no ve los lahares de 2019 en Las Lajas**: la barranca ya estaba pelada
+   desde 2018. Para validar mejor haría falta una "verdad" distinta: alcances
+   reportados por evento, sensores sísmicos o modelos de elevación repetidos con dron.
+
+**Trabajo futuro:** fuentes múltiples a lo largo de la barranca, erosión y crecimiento
+del volumen en el camino, otras barrancas (Ceniza, Seca) y un DEM posterior a 2018.
+
+# 8. Limitaciones
+
+- **Volumen:** el balance P·A·C/(1−Cs) ignora la infiltración variable, la erosión del
+  cauce (el lahar crece en el camino) y cuánto sedimento suelto hay realmente.
+- **Lluvia:** una sola celda de 9 km para todo el cono; subestima tormentas convectivas.
+- **Terreno:** DSM de antes de 2018 (no refleja el relleno de las barrancas) y con hoyos
+  rellenados artificialmente.
+- **Fuente fija:** en la realidad los lahares se forman en varios puntos de la barranca.
+- **Tormenta mayor = huella de la temporada:** suposición para ahorrar cómputo.
+- **"Verdad" débil:** Sentinel-2 muestra la temporada acumulada; en Las Lajas el cauce
+  ya estaba desnudo, así que la versión amplia dice por dónde puede pasar el lodo, no
+  hasta dónde llegó. Los boletines son cualitativos y no dicen el alcance.
+- **Una sola barranca y dos periodos:** pocos datos de prueba.
+- **Relajación:** parámetro numérico casi sin efecto en el resultado.
+
+# 9. Bibliografía
+
+- Di Gregorio, S. y Serra, R. (1999). An empirical method for modelling and simulating
+  some complex macroscopic phenomena by cellular automata. *Future Generation Computer
+  Systems*, 16(2–3), 259–271.
+- Iverson, R. M., Schilling, S. P. y Vallance, J. W. (1998). Objective delineation of
+  lahar-inundation hazard zones. *GSA Bulletin*, 110(8), 972–984.
+- Jones, R., Thomas, R. E., Peakall, J. y Manville, V. (2017). Rainfall-runoff properties
+  of tephra: simulated effects of grain-size and antecedent rainfall. *Geomorphology*,
+  282, 39–51. doi:10.1016/j.geomorph.2016.12.023
+- Major, J. J. y Pierson, T. C. (1992). Debris flow rheology: experimental analysis of
+  fine-grained slurries. *Water Resources Research*, 28(3), 841–857. doi:10.1029/91WR02834
+- Pierson, T. C. y Costa, J. E. (1987). A rheologic classification of subaerial
+  sediment-water flows. *Reviews in Engineering Geology*, 7, 1–12.
+- Pierson, T. C. (2005). Hyperconcentrated flow – transitional process between water
+  flow and debris flow. En Jakob, M. y Hungr, O. (eds.), *Debris-flow Hazards and
+  Related Phenomena*, 159–202. Springer.
+- Pierson, T. C. y Major, J. J. (2014). Hydrogeomorphic effects of explosive volcanic
+  eruptions on drainage basins. *Annual Review of Earth and Planetary Sciences*, 42, 469–507.
+- Vallance, J. W. e Iverson, R. M. (2015). Lahars and their deposits. En Sigurdsson, H.
+  et al. (eds.), *The Encyclopedia of Volcanoes*, 2.ª ed., 649–664. Academic Press.
+- Buondonno, C. (2020). *Rain generated lahars prior to the 2018 catastrophic eruption
+  of Fuego volcano, Guatemala*. Tesis de maestría, Michigan Technological University.
+- Copernicus DEM GLO-30 (ESA). Copernicus Sentinel-2 L2A, vía Earth Search (Element84).
+- Open-Meteo Historical Weather API. <https://open-meteo.com>
+- INSIVUMEH (2018). Mapa preliminar de amenaza de lahares, crisis eruptiva del Volcán de
+  Fuego, escenario B. INSIVUMEH, boletín BEFGO #77-2019.
+- CONRED, boletín informativo 112-2019. <https://conred.gob.gt>
+- Emisoras Unidas (11-05-2019) y Soy502 (28-10-2019), notas sobre lahares en Las Lajas.
