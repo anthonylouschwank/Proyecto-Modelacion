@@ -66,3 +66,89 @@ Figuras en esta misma carpeta; se regeneran con `python -m src.modelo.demo …`.
 | v1.0 | (285, 790) | 100 pasos | 10.8 km (otra barranca) | 0 % | 29 m | 2472 | 16 s |
 | v1.1 | (294, 822) | de golpe | 29.7 km | 61 % | 415 m | 9105 | 76 s |
 | v1.2 | (294, 822) | 100 pasos | 29.7 km | 61 % | 28.5 m | 9123 | 74 s |
+
+---
+
+## v2.0 – Resistencia del lodo (espesor crítico), DEM original
+
+`simular(..., version="v2")`: una celda solo cede el lodo que pasa de un espesor crítico
+`h_crit = max(h_min, τ_y / (ρ g sen θ))` (`h_min` = versión simple, `τ_y` = Bingham).
+Pruebas nuevas en `tests/test_automata.py`: v2 se detiene en plano horizontal, conserva la
+masa, más `h_min` ⇒ menos alcance, y Bingham baja una rampa pero se detiene en lo plano.
+
+- **Qué pasó en Las Lajas:** con el volumen de la tormenta mayor de p1 (1.8 × 10⁴ m³,
+  calculado con la cuenca arriba de la fuente, 0.32 km²) **hasta la v1 se detiene a
+  2.5 km**, atrapada en los hoyos del DSM. La resistencia de v2 no tiene nada que
+  controlar: el que detiene el lodo es el ruido del terreno.
+- **Lección:** antes de calibrar la física hay que quitar lo que la imita.
+
+## v2.1 – Terreno sin hoyos
+
+`src/modelo/terreno.py`: el autómata corre sobre el DEM con hoyos y depresiones rellenados
+(mismo acondicionamiento que la cuenca).
+
+| Corrida (V = 5 × 10⁴ m³) | DEM original | DEM relleno |
+|---|---|---|
+| v1 | 2.6 km, 0 % fuera | 38.6 km, 100 % sale de la zona |
+| v2, `h_min` = 1 m | 0.6 km | 0.6 km |
+| v2, `τ_y` = 1000 Pa | 1.5 km | 1.8 km |
+
+Ahora v1 se comporta como agua (llega al mar) y v2 sí controla el alcance.
+
+## v2.2 – Primera calibración: el objetivo estaba mal
+
+Cuadrícula de `relajacion` × `h_min` y `relajacion` × `τ_y` contra p1, eligiendo por el
+Jaccard promedio (estricta + amplia). **Ganó el valor más bajo de la cuadrícula
+(τ_y = 20 Pa) y v1 le ganó a v2.** Dos razones:
+
+1. Pasando el km 7.4 el cauce entra al **río Guacalate** (el área drenada salta de 11 a
+   124 km²). Los cambios "observados" entre los km 8 y 36 son del Guacalate (crecidas,
+   caña de azúcar), no de los lahares de Las Lajas, y premiaban llegar lejos.
+2. El volumen salía de la cuenca arriba de la fuente (0.32 km²): para llegar a donde
+   se ven cambios hacía falta una resistencia irrealmente baja.
+
+## v2.3 – Volumen y dominio de validación corregidos
+
+- **Volumen:** el área de escurrimiento es toda la barranca hasta la confluencia
+  (11.3 km², `area_lajas_m2` en `lajas_fuente.json`): el lahar se alimenta del agua de
+  toda la barranca en su camino. Tormenta mayor de p1: 6.3 × 10⁵ m³; de p2: 1.5 × 10⁶ m³,
+  del orden de lo reportado para lahares de Fuego.
+- **Dominio:** la máscara observada solo cubre Las Lajas hasta la confluencia.
+- **Objetivo:** Jaccard amplio **penalizado** (el lodo fuera del corredor cuenta como
+  error). Dentro de Las Lajas casi no hay clase 2 en 2019 (la barranca está pelada desde
+  2018), así que la versión estricta no sirve para calibrar.
+
+## v2.4 – Calibración final ✅ (v2 final)
+
+`python -m src.modelo.calibrar` → `calibracion_p1.csv`, `calibracion_p1.png`,
+`parametros_calibrados.json`.
+
+- **Mejor:** Bingham, `τ_y` = 1000 Pa, `relajacion` = 0.2 (Jaccard penalizado 0.326,
+  Jaccard amplio 0.456). Con `h_min` el mejor fue 0.5 m (0.312). 1000 Pa está dentro de
+  los esfuerzos de fluencia reportados para flujos de detritos (10²–10⁴ Pa).
+- En `calibracion_p1.png` las curvas de las cuatro `relajacion` casi se enciman: es un
+  parámetro numérico (qué fracción del exceso se mueve por paso) y casi no cambia el
+  resultado. Ganó 0.2 por milésimas. Lo que sí importa es la resistencia: hay un máximo
+  claro en `τ_y` = 1000 Pa y en `h_min` = 0.5 m; con menos el lodo sigue al Guacalate,
+  con más se queda corto.
+
+`python -m src.modelo.calibrar --versiones` → `metricas_versiones.csv`:
+
+| Versión | Periodo | Volumen | Alcance por el cauce | Jaccard penalizado | Jaccard amplio | Fuera del corredor |
+|---|---|---|---|---|---|---|
+| v1 | p1 (calibración) | 6.3 × 10⁵ m³ | 38.6 km | 0.124 | 0.409 | 80 % |
+| **v2** | p1 (calibración) | 6.3 × 10⁵ m³ | **8.3 km** | **0.326** | 0.456 | 38 % |
+| v1 | p2 (prueba) | 1.5 × 10⁶ m³ | 38.6 km | 0.114 | 0.451 | 80 % |
+| **v2** | p2 (prueba) | 1.5 × 10⁶ m³ | **14.1 km** | **0.227** | 0.437 | 54 % |
+
+- **Conclusión de v2:** con la resistencia el lodo se detiene poco después de la
+  confluencia en vez de llegar al mar, y en la prueba (p2, sin tocar los parámetros)
+  el Jaccard penalizado duplica al de v1. El Jaccard amplio casi no distingue las
+  versiones porque el cauce desnudo de 2018 llega hasta la confluencia: la imagen
+  muestra por dónde **puede** pasar el lodo, no hasta dónde llegó.
+
+## v3 – Lluvia y Monte Carlo
+
+v3 es la v2 calibrada dentro del Monte Carlo (`src/montecarlo/correr.py`): cada corrida
+sortea `C`, `Cs`, `factor_lluvia`, `relajacion` (0.14–0.26) y `τ_y` (700–1300 Pa), con el
+volumen de la tormenta mayor de cada periodo. Resultados en `results/montecarlo/`.
