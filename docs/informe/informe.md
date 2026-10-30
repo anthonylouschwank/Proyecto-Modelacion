@@ -259,3 +259,25 @@ La resistencia de Bingham hace que el lodo se detenga en la planicie en vez de s
 hasta el mar. En el periodo de prueba, que no se usó para calibrar, el Jaccard
 penalizado de v2 **duplica** al de v1.
 
+## 6.2 Monte Carlo (v3)
+
+| | p1 | p2 |
+|---|---|---|
+| Tormenta mayor | 61 mm (12 jun) | 150 mm (13 sep) |
+| Volumen sorteado | 3.4 × 10⁵ – 1.7 × 10⁶ m³ | 8.3 × 10⁵ – 4.1 × 10⁶ m³ |
+| Área con P > 0 | 3.14 km² | 6.17 km² |
+| Área con P ≥ 0.5 | 1.62 km² | 3.12 km² |
+| Alcance mediano por el cauce | 9.4 km | 16.6 km |
+
+**Convergencia** (`results/montecarlo/convergencia.png`): la diferencia máxima entre el
+mapa con N y con N/2 corridas baja de 0.26–0.32 (N = 15) a **0.04** (N = 500), y la
+diferencia media en las celdas con lodo a **0.006**. N = 500 es suficiente.
+
+![Probabilidad de alcance en p2 (N = 500).](../../results/montecarlo/prob_p2.png){width=55%}
+
+![Convergencia del Monte Carlo.](../../results/montecarlo/convergencia.png){width=70%}
+
+Los mapas de probabilidad (`prob_p1.png`, `prob_p2.png`) muestran P ≈ 1 en la parte alta
+de Las Lajas hasta el puente de la RN-14 y una cola de probabilidad baja que sigue por el
+Guacalate.
+
