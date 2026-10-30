@@ -96,6 +96,63 @@ un segundo a unos 10 s. `tests/test_automata.py` verifica conservación de masa 
 < 10⁻⁹), plano inclinado, cuenco, canal en V, borde absorbente, que v2 se detiene en
 plano, y que más volumen ⇒ más alcance y más resistencia ⇒ menos alcance (13 pruebas).
 
+## 4.3 Proceso iterativo del modelo
+
+El registro completo, con figuras y tablas, está en `results/modelo/registro_iteraciones.md`.
+
+| Versión | Cambio | Qué pasó | Qué motivó |
+|---|---|---|---|
+| v1.0 | Lodo sin resistencia, fuente a ojo | Se fue por la barranca del oeste | La fuente estaba al otro lado de una divisoria: se ajustó con el DEM |
+| v1.2 | Fuente corregida, volumen en 100 pasos | Recorre 29.7 km y 61 % sale de la zona: se comporta como **agua** | Agregar resistencia (v2) |
+| v2.0 | Espesor crítico (`h_min` / Bingham) | Hasta v1 se detenía a 2.5 km, atrapada en **hoyos del DSM** | Quitar el ruido del terreno |
+| v2.1 | DEM sin hoyos | v1 llega al mar; v2 sí controla el alcance | Calibrar |
+| v2.2 | Primera calibración | Ganaba la resistencia más baja y v1 le ganaba a v2 | Revisar el volumen y el dominio de validación |
+| v2.3 | Volumen con el área de toda la barranca; validar solo en Las Lajas; objetivo penalizado | — | Calibración final |
+| **v2.4** | **Calibración final** | Bingham, τ_y = 1000 Pa | Usar en el Monte Carlo (v3) |
+| v3 | Monte Carlo con v2 calibrada | Mapas de probabilidad p1 y p2 | — |
+
+![v1.2: sin resistencia el lodo recorre todo el sistema de ríos.](../../results/modelo/v1_lajas_5e+05.png){width=55%}
+
+## 4.4 Mapa observado con Sentinel-2 (`src/sentinel/ndvi.py`)
+
+Para cada periodo se compara el NDVI de la imagen inicial y la final dentro de un
+corredor de 500 m alrededor del cauce de Las Lajas (hasta la confluencia):
+
+| Clase | Significado | Regla |
+|---|---|---|
+| 2 | Cambio seguro: había vegetación y ya no | NDVI antes ≥ 0.4 y ΔNDVI ≥ 0.25 |
+| 1 | Posible: desnudo al final, pero ya lo estaba | NDVI después < 0.2 |
+| 0 | Vegetación | resto |
+| 255 | Sin dato (nubes, sombras, fuera del corredor) | máscara SCL |
+
+Se quitan manchas de menos de 5 píxeles y las que no tocan el cauce, y se pasa a la
+cuadrícula de 30 m por mayoría. El corredor llegó a esa forma en cuatro iteraciones
+(`results/sentinel/umbrales.md`): con el corredor de 38 km aparecían parcelas de caña
+cosechadas como "cambio seguro"; la solución fue validar solo en Las Lajas.
+
+**Hallazgo:** dentro de Las Lajas casi no hay cambio seguro en 2019 (≈ 0 km² en p1 y
+0.01 km² en p2) y sí ~1 km² de cauce desnudo. La barranca ya estaba pelada desde 2018:
+los lahares de 2019 pasan por un cauce sin vegetación que perder. Por eso la métrica
+principal es la **versión amplia** (clases 1 y 2).
+
+![Mapa observado en p2: cauce desnudo (clase 1) dentro del corredor de Las Lajas.](../../results/sentinel/observado_p2.png){width=50%}
+
+## 4.5 Calibración (`src/modelo/calibrar.py`)
+
+Búsqueda en cuadrícula de `relajacion` (0.2–0.8) × `h_min` (0.1–5 m) y × `τ_y`
+(50–5000 Pa) con la tormenta mayor de p1 (61 mm, 6.3 × 10⁵ m³). Objetivo: **Jaccard
+amplio penalizado**,
+
+$$J_{pen} = \frac{|S \cap O|}{|S \cup O| + |S_{fuera}|}$$
+
+que además del traslape cuenta como error el lodo simulado fuera del corredor (si no,
+siempre gana el modelo que llega más lejos). Resultado (`results/modelo/calibracion_p1.png`):
+máximo claro en **τ_y = 1000 Pa** (J_pen = 0.326) y en h_min = 0.5 m (0.312); la
+relajación casi no influye. 1000 Pa está dentro de los esfuerzos de fluencia reportados
+para flujos de detritos (10²–10⁴ Pa; Major y Pierson, 1992).
+
+![Calibración con p1: sensibilidad del Jaccard penalizado a la resistencia.](../../results/modelo/calibracion_p1.png)
+
 ## 4.6 Monte Carlo (`src/montecarlo/correr.py`)
 
 Cada corrida sortea, con distribución uniforme:
