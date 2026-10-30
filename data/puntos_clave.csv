@@ -1,0 +1,8 @@
+nombre,x,y,tipo,barranca,esperado_p1,esperado_p2,fuente,notas
+Puente Las Lajas (RN-14),734422,1595130,infraestructura,Las Lajas,,,OpenStreetMap (puente Las Lajas),A 30 m del cauce (km 5.9). Los boletines de 2019 no dicen si los lahares llegaron al puente
+San Miguel Los Lotes,734158,1593988,comunidad,Las Lajas,0,0,OpenStreetMap,Arrasada por el flujo piroclástico de 2018 (no por un lahar); a 0.9 km del cauce. Sin reportes de lahares en 2019
+El Rodeo,733820,1592211,comunidad,Las Lajas,0,0,OpenStreetMap,Centro de la aldea a 1.5 km del cauce. Evacuada por lahares en 2018; sin reportes de daño en 2019
+La Reina,732997,1592271,comunidad,Las Lajas,0,0,OpenStreetMap,A 2.3 km del cauce. Sin reportes de daño en 2019
+Puente Guacalate (CA-2),736165,1580457,infraestructura,Guacalate,,,OpenStreetMap (puente Guacalate en la Carretera al Pacífico),Sobre el cauce en el km 23 (ya en el Guacalate). Sin dato de 2019
+La Trinidad,731328,1591014,control,otra (no Las Lajas),0,0,OpenStreetMap,Punto de control en otra barranca (4.1 km del cauce de Las Lajas): no debería alcanzarse
+Finca El Zapote,729370,1591080,control,otra (no Las Lajas),0,0,OpenStreetMap,Punto de control en otra barranca (6 km del cauce de Las Lajas): no debería alcanzarse
