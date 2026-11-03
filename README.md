@@ -60,6 +60,11 @@ Con el pipeline ya corrido, `python -m src.demo_video` muestra en ventanas el pr
 funcionando, en cuatro pasos y con Enter entre ellos: las pruebas, un lahar animado con v1
 contra v2, un Monte Carlo en vivo y la validación. No modifica `results/`.
 
+También hay un simulador interactivo en el navegador: `streamlit run src/app.py
+--server.headless true` (abre en http://localhost:8501; con `--server.port` se cambia el
+puerto). Tiene controles para la versión del modelo, la tormenta, C, Cs, τy y la
+relajación, y una pestaña con los mapas del Monte Carlo de 500 corridas.
+
 ## Pruebas
 
 ```bash
