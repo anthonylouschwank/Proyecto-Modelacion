@@ -4,6 +4,9 @@ Proyecto de Modelación y Simulación: un autómata celular sobre el terreno rea
 del Volcán de Fuego que, dada una lluvia observada, simula hasta dónde llegaría
 un lahar, con Monte Carlo para obtener mapas de probabilidad de alcance.
 
+- Video: <https://youtu.be/kVhzoMKL3i4>
+- Informe: [`docs/informe/informe.pdf`](docs/informe/informe.pdf)
+- Presentación: [`docs/presentacion/presentacion.pdf`](docs/presentacion/presentacion.pdf)
 - Plan del proyecto: [`docs/plan_proyecto_lahares.md`](docs/plan_proyecto_lahares.md)
 - Fuentes de datos y cómo descargarlas: [`data/README.md`](data/README.md)
 - División del trabajo (4 partes): [`docs/tareas/`](docs/tareas/00_general.md)
