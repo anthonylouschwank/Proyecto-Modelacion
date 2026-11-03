@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Lahares en Las Lajas</title>
+<style>
+  @page { size: 13.333in 7.5in; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #fff; }
+  body { font-family: "Segoe UI", Arial, sans-serif; color: #1a1a1a; }
+  .slide { width: 13.333in; height: 7.5in; padding: 0.55in 0.75in 0.5in; position: relative;
+           page-break-after: always; overflow: hidden; display: flex; flex-direction: column; }
+  .slide:last-child { page-break-after: auto; }
+  h1 { font-size: 30pt; margin: 0 0 0.25in; font-weight: 600; color: #0b3d2e; }
+  h1 small { display: block; font-size: 13pt; font-weight: 400; color: #6b6b6b; margin-top: 4px; }
+  p, li { font-size: 16pt; line-height: 1.35; }
+  ul { margin: 0; padding-left: 1.1em; }
+  li { margin-bottom: 0.12in; }
+  .cols { display: flex; gap: 0.45in; flex: 1; min-height: 0; align-items: center; }
+  .cols > div { flex: 1; min-width: 0; }
+  .fig { text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+  .fig img { max-width: 100%; max-height: 5.4in; object-fit: contain; }
+  .cap { font-size: 11pt; color: #6b6b6b; margin-top: 4px; }
+  .num { position: absolute; right: 0.75in; bottom: 0.3in; font-size: 11pt; color: #9a9a9a; }
+  .barra { position: absolute; left: 0; top: 0; bottom: 0; width: 0.18in; background: #0b3d2e; }
+  table { border-collapse: collapse; font-size: 13.5pt; margin: 0.1in 0; }
+  th { background: #0b3d2e; color: #fff; font-weight: 600; padding: 6px 12px; text-align: center; }
+  td { padding: 6px 12px; border-bottom: 1px solid #d6d6d6; text-align: center; }
+  td:first-child { text-align: left; }
+  .dato { font-size: 40pt; color: #0b3d2e; font-weight: 600; line-height: 1; }
+  .datos { display: flex; gap: 0.4in; margin: 0.15in 0 0.25in; }
+  .datos div p { font-size: 13pt; margin: 4px 0 0; color: #444; }
+  .flujo { display: flex; align-items: stretch; gap: 0.12in; margin: 0.2in 0 0.35in; }
+  .paso { flex: 1; border: 2px solid #0b3d2e; border-radius: 10px; padding: 0.14in; font-size: 13.5pt; text-align: center; }
+  .paso b { display: block; font-size: 15pt; color: #0b3d2e; margin-bottom: 4px; font-weight: 600; }
+  .flecha { align-self: center; font-size: 22pt; color: #0b3d2e; }
+  .formula { font-family: "Cambria Math", "Times New Roman", serif; font-size: 19pt; text-align: center; margin: 0.15in 0; }
+  .portada { justify-content: center; text-align: center; background: #0b3d2e; color: #fff; }
+  .portada h1 { color: #fff; font-size: 38pt; margin-bottom: 0.15in; }
+  .portada .sub { font-size: 19pt; color: #cfe3da; margin: 0 0 0.5in; }
+  .portada p { font-size: 15pt; margin: 4px 0; }
+  .portada .curso { font-size: 13pt; color: #cfe3da; margin-top: 0.45in; }
+</style>
+</head>
+<body>
+
+<section class="slide portada">
+  <h1>Lahares en la barranca Las Lajas</h1>
+  <p class="sub">Simulación probabilística con autómata celular y Monte Carlo · Volcán de Fuego</p>
+  <p>Leonardo Mejía – 23648 · María José Girón – 23559</p>
+  <p>Isabella Obando – 23074 · Anthony Lou – 23410</p>
+  <p class="curso">CC2017 Modelación y Simulación · Universidad del Valle de Guatemala · noviembre 2026</p>
+</section>
+
+<section class="slide">
+  <div class="barra"></div>
+  <h1>El problema</h1>
+  <div class="cols">
+    <div>
+      <ul>
+        <li>Un lahar es lodo volcánico: lluvia mezclada con ceniza y bloques, con consistencia de concreto fresco.</li>
+        <li>No necesita erupción. Después de 2018, Las Lajas quedó llena de material suelto y cada época de lluvia hay lahares.</li>
+        <li>Han dañado el puente de la RN-14 y amenazan a El Rodeo y La Reina.</li>
+      </ul>
+      <p style="margin-top:0.25in; color:#0b3d2e">Pregunta: con la lluvia observada en un periodo, ¿qué zonas alcanza un lahar y con qué probabilidad?</p>
+    </div>
+    <div class="fig" style="flex:1.5">
+      <img src="../../results/montecarlo/cuenca_lajas.png" alt="Cuenca y cauce de Las Lajas">
+      <div class="cap">Cuenca, cauce y fuente de Las Lajas</div>
+    </div>
+  </div>
+  <div class="num">2</div>
+</section>
+
+<section class="slide">
+  <div class="barra"></div>
+  <h1>Análisis y propuesta</h1>
+  <p>El alcance depende del terreno, del volumen y de la resistencia del lodo. Los dos últimos son inciertos, así que una sola simulación daría falsa certeza: buscamos un mapa de probabilidad.</p>
+  <div class="flujo">
+    <div class="paso"><b>Lluvia</b>Open-Meteo, horaria, 2019</div>
+    <div class="flecha">→</div>
+    <div class="paso"><b>Volumen</b>Cuenca con pysheds y balance de agua</div>
+    <div class="flecha">→</div>
+    <div class="paso"><b>Autómata celular</b>Lodo celda por celda sobre el DEM de 30 m</div>
+    <div class="flecha">→</div>
+    <div class="paso"><b>Monte Carlo</b>500 corridas, 5 parámetros inciertos</div>
+    <div class="flecha">→</div>
+    <div class="paso"><b>Validación</b>Sentinel-2, puntos clave, INSIVUMEH</div>
+  </div>
+  <ul>
+    <li>2019 se parte en dos periodos entre tres imágenes Sentinel-2: p1 (mar–jul) para calibrar y p2 (jul–dic) para probar sin reajustar.</li>
+  </ul>
+  <div class="num">3</div>
+</section>
+
+<section class="slide">
+  <div class="barra"></div>
+  <h1>Cuenca y volumen del lahar</h1>
+  <div class="cols">
+    <div>
+      <ul>
+        <li>pysheds (D8) traza el cauce desde la fuente a 1829 m y detecta la confluencia con el Guacalate en el km 7.4.</li>
+        <li>Las tormentas se separan en la serie horaria: al menos 20 mm, con 6 h secas entre una y otra.</li>
+      </ul>
+      <div class="formula">V<sub>agua</sub> = P · A · C &nbsp;&nbsp;&nbsp; V<sub>lahar</sub> = V<sub>agua</sub> / (1 − C<sub>s</sub>)</div>
+      <ul>
+        <li>A = 11.3 km² (toda Las Lajas), C = escurrimiento, C<sub>s</sub> = sedimento.</li>
+      </ul>
+    </div>
+    <div>
+      <table>
+        <tr><th></th><th>p1</th><th>p2</th></tr>
+        <tr><td>Tormenta mayor</td><td>61 mm</td><td>150 mm</td></tr>
+        <tr><td>Fecha</td><td>12 jun</td><td>13 sep</td></tr>
+        <tr><td>Volumen (rango)</td><td>0.3–1.7 × 10⁶ m³</td><td>0.8–4.1 × 10⁶ m³</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="num">4</div>
+</section>
+
+<section class="slide">
+  <div class="barra"></div>
+  <h1>Autómata celular<small>Minimización de diferencias (Di Gregorio y Serra, 1999)</small></h1>
+  <div class="cols">
+    <div>
+      <ul>
+        <li>Cada celda tiene terreno z y espesor de lodo h. El lodo pasa a los vecinos más bajos (vecindad de Moore) según la diferencia de altura de la superficie z + h.</li>
+        <li>v2 agrega resistencia de Bingham: solo se mueve el lodo que sobra del espesor crítico.</li>
+      </ul>
+      <div class="formula">h<sub>crit</sub> = max( h<sub>min</sub> , τ<sub>y</sub> / (ρ g sin θ) )</div>
+      <ul>
+        <li>En pendiente fuerte el lodo fluye y en la planicie se detiene.</li>
+        <li>Compilado con Numba: de menos de 1 s a 10 s por corrida. 13 pruebas, como conservación de masa y plano inclinado.</li>
+      </ul>
+    </div>
+    <div class="fig" style="flex:0.55">
+      <img src="../../results/modelo/v1_lajas_5e+05.png" alt="Corrida de v1">
+      <div class="cap">v1 sin resistencia: el lodo se comporta como agua</div>
+    </div>
+  </div>
+  <div class="num">5</div>
+</section>
+
+<section class="slide">
+  <div class="barra"></div>
+  <h1>Proceso iterativo</h1>
+  <table style="margin-bottom:0.25in">
+    <tr><th>Versión</th><th>Qué pasó</th><th>Qué cambiamos</th></tr>
+    <tr><td>v1.0</td><td>La fuente estaba al otro lado de una divisoria</td><td>Ubicarla con el DEM</td></tr>
+    <tr><td>v1.2</td><td>Recorre 29.7 km: se comporta como agua</td><td>Agregar resistencia (v2)</td></tr>
+    <tr><td>v2.0</td><td>Se atascaba a 2.5 km en hoyos del DSM</td><td>DEM sin hoyos</td></tr>
+    <tr><td>v2.2</td><td>Ganaba la resistencia más baja</td><td>Volumen de toda la barranca y validar solo en Las Lajas</td></tr>
+    <tr><td>v2.4</td><td>Calibración final: τ<sub>y</sub> = 1000 Pa</td><td>Monte Carlo (v3)</td></tr>
+  </table>
+  <table>
+    <tr><th>Periodo de prueba (p2)</th><th>Alcance</th><th>Jaccard penalizado</th><th>Fuera del corredor</th></tr>
+    <tr><td>v1 sin resistencia</td><td>38.6 km</td><td>0.11</td><td>80 %</td></tr>
+    <tr><td>v2 con Bingham</td><td>14.1 km</td><td>0.23</td><td>54 %</td></tr>
+  </table>
+  <div class="num">6</div>
+</section>
+
+<section class="slide">
+  <div class="barra"></div>
+  <h1>Mapa observado y calibración</h1>
+  <div class="cols">
+    <div style="flex:0.7">
+      <ul>
+        <li>NDVI = (NIR − Rojo) / (NIR + Rojo) de Sentinel-2, antes y después de cada periodo, en un corredor de 500 m alrededor del cauce.</li>
+        <li>Hallazgo: en 2019 casi no hay vegetación perdida. La barranca ya estaba pelada desde 2018, así que se valida con el cauce desnudo.</li>
+        <li>Calibración en cuadrícula con p1, maximizando el Jaccard penalizado. Este cuenta como error el lodo fuera del corredor.</li>
+        <li>Óptimo: τ<sub>y</sub> = 1000 Pa, dentro del rango físico de flujos de detritos (10²–10⁴ Pa).</li>
+      </ul>
+    </div>
+    <div class="fig">
+      <img src="../../results/modelo/calibracion_p1.png" alt="Calibración con p1">
+      <div class="cap">Sensibilidad del Jaccard penalizado a la resistencia</div>
+    </div>
+  </div>
+  <div class="num">7</div>
+</section>
+
+<section class="slide">
+  <div class="barra"></div>
+  <h1>Monte Carlo</h1>
+  <div class="cols">
+    <div>
+      <p>Cada corrida sortea 5 parámetros uniformes: escurrimiento C, sedimento C<sub>s</sub>, factor de lluvia, relajación y τ<sub>y</sub> (± 30 % de lo calibrado).</p>
+      <div class="formula">P(alcance) = corridas con lodo / N</div>
+      <div class="datos">
+        <div><div class="dato">500</div><p>corridas por periodo</p></div>
+        <div><div class="dato">3.1 km²</div><p>con P ≥ 0.5 en p2</p></div>
+        <div><div class="dato">0.04</div><p>diferencia máxima N vs N/2</p></div>
+      </div>
+      <p>Con N = 500 el mapa ya no cambia: converge.</p>
+    </div>
+    <div class="fig" style="flex:0.6">
+      <img src="../../results/montecarlo/prob_p2.png" alt="Probabilidad de alcance en p2">
+      <div class="cap">Probabilidad de alcance en p2</div>
+    </div>
+  </div>
+  <div class="num">8</div>
+</section>
+
+<section class="slide">
+  <div class="barra"></div>
+  <h1>Validación</h1>
+  <div class="cols">
+    <div>
+      <table>
+        <tr><th>Mapa P ≥ 0.5 vs Sentinel-2</th><th>p1 calibración</th><th>p2 prueba</th></tr>
+        <tr><td>F1</td><td>0.63</td><td>0.61</td></tr>
+        <tr><td>Sensibilidad</td><td>0.61</td><td>0.71</td></tr>
+        <tr><td>Precisión</td><td>0.67</td><td>0.53</td></tr>
+      </table>
+      <ul style="margin-top:0.2in">
+        <li>Sin sobreajuste: p2 rinde casi igual que p1.</li>
+        <li>Puntos clave: cero falsas alarmas en comunidades y puntos de control. El puente de la RN-14 queda con P ≈ 1.</li>
+        <li>INSIVUMEH: el 90 % del lodo simulado cae dentro de su zona de amenaza.</li>
+      </ul>
+    </div>
+    <div class="fig" style="flex:0.5">
+      <img src="../../results/validacion/sim_vs_obs_p2.png" alt="Modelo contra Sentinel-2 en p2">
+      <div class="cap">Modelo contra observado en p2</div>
+    </div>
+  </div>
+  <div class="num">9</div>
+</section>
+
+<section class="slide">
+  <div class="barra"></div>
+  <h1>Conclusiones y limitaciones</h1>
+  <div class="cols" style="align-items:flex-start">
+    <div>
+      <ul>
+        <li>Con resistencia de Bingham, el autómata reproduce lo esencial: el lodo corre por la barranca y se detiene en la planicie.</li>
+        <li>τ<sub>y</sub> = 1000 Pa es físicamente razonable y mantiene el desempeño en el periodo de prueba.</li>
+        <li>El Monte Carlo convierte la incertidumbre en un mapa de probabilidad útil para la gestión de riesgo.</li>
+        <li>Lo más difícil fue decidir contra qué comparar. Tres errores de planteamiento cambiaron la conclusión.</li>
+      </ul>
+    </div>
+    <div>
+      <ul>
+        <li>Volumen simple, sin erosión del cauce ni infiltración variable.</li>
+        <li>Lluvia de una celda de 9 km y DEM de antes de 2018.</li>
+        <li>Fuente fija y una sola barranca.</li>
+        <li>Validación débil: Sentinel-2 muestra por dónde puede pasar el lodo, no hasta dónde llegó.</li>
+      </ul>
+    </div>
+  </div>
+  <p style="color:#6b6b6b; font-size:13pt">github.com/anthonylouschwank/Proyecto-Modelacion</p>
+  <div class="num">10</div>
+</section>
+
+</body>
+</html>
