@@ -17,6 +17,7 @@ lang: es
 <p>Anthony Lou – 23410</p>
 </div>
 <p class="repo">Repositorio de GitHub: <a href="https://github.com/anthonylouschwank/Proyecto-Modelacion">https://github.com/anthonylouschwank/Proyecto-Modelacion</a></p>
+<p class="repo">Video: <a href="https://youtu.be/kVhzoMKL3i4">https://youtu.be/kVhzoMKL3i4</a></p>
 <p class="fecha">Guatemala, 3 de noviembre de 2026</p>
 </div>
 
