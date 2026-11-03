@@ -7,3 +7,4 @@ pystac-client
 requests
 numba
 pytest
+streamlit
