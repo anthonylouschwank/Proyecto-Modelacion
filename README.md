@@ -51,6 +51,12 @@ python -m src.validacion.evaluar            # prueba final: p2, puntos clave, IN
 Resultados en `results/`: `modelo/registro_iteraciones.md` (proceso iterativo),
 `sentinel/umbrales.md`, `montecarlo/` y `validacion/`.
 
+## Demo
+
+Con el pipeline ya corrido, `python -m src.demo_video` muestra en ventanas el proyecto
+funcionando, en cuatro pasos y con Enter entre ellos: las pruebas, un lahar animado con v1
+contra v2, un Monte Carlo en vivo y la validación. No modifica `results/`.
+
 ## Pruebas
 
 ```bash
